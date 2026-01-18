@@ -73,6 +73,7 @@ export default function VisionBoardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [searchSource, setSearchSource] = useState<"unsplash" | "pexels" | "google">("unsplash")
 
   useEffect(() => {
     fetchData()
@@ -106,11 +107,12 @@ export default function VisionBoardPage() {
 
     setIsSearching(true)
     try {
-      const res = await fetch(`/api/vision/search?q=${encodeURIComponent(searchQuery)}`)
+      const res = await fetch(`/api/vision/search?q=${encodeURIComponent(searchQuery)}&source=${searchSource}`)
       const data = await res.json()
       setSearchResults(data.results || [])
     } catch (error) {
       console.error("Search failed:", error)
+      setSearchResults([])
     } finally {
       setIsSearching(false)
     }
@@ -318,11 +320,23 @@ export default function VisionBoardPage() {
                     </TabsContent>
 
                     <TabsContent value="search" className="mt-4 space-y-4">
+                      {/* Provider Tabs */}
+                      <Tabs value={searchSource} onValueChange={(v) => {
+                        setSearchSource(v as any)
+                        setSearchResults([])
+                      }} className="w-full">
+                        <TabsList className="w-full grid grid-cols-3 h-8">
+                          <TabsTrigger value="unsplash" className="text-xs">Unsplash</TabsTrigger>
+                          <TabsTrigger value="pexels" className="text-xs">Pexels</TabsTrigger>
+                          <TabsTrigger value="google" className="text-xs">Google</TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+
                       <div className="flex gap-2">
                         <Input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search for inspiration..."
+                          placeholder={`Search ${searchSource}...`}
                           onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
                         />
                         <Button type="button" onClick={handleSearch} disabled={isSearching}>
@@ -336,19 +350,21 @@ export default function VisionBoardPage() {
                             <button
                               key={photo.id}
                               type="button"
-                              className={`relative aspect-square overflow-hidden rounded border transition-all hover:scale-105 focus:outline-none ${formData.imageUrl === photo.urls.regular ? 'ring-2 ring-[var(--primary)] border-[var(--primary)]' : 'hover:ring-2 ring-[var(--muted-foreground)]'
+                              className={`relative aspect-square overflow-hidden rounded border transition-all hover:scale-105 focus:outline-none ${formData.imageUrl === photo.url ? 'ring-2 ring-[var(--primary)] border-[var(--primary)]' : 'hover:ring-2 ring-[var(--muted-foreground)]'
                                 }`}
-                              onClick={() => selectImage(photo.urls.regular, photo.alt_description)}
+                              onClick={() => selectImage(photo.url, photo.title)}
                             >
-                              <img src={photo.urls.thumb} alt={photo.alt_description} className="w-full h-full object-cover" />
-                              {formData.imageUrl === photo.urls.regular && (
+                              <img src={photo.thumbnail} alt={photo.title || "Image"} className="w-full h-full object-cover" />
+                              {formData.imageUrl === photo.url && (
                                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                   <Check className="w-6 h-6 text-white" />
                                 </div>
                               )}
-                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white p-0.5 truncate px-1 opacity-0 hover:opacity-100 transition-opacity">
-                                by {photo.user.name}
-                              </div>
+                              {photo.author && (
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white p-0.5 truncate px-1 opacity-0 hover:opacity-100 transition-opacity">
+                                  by {photo.author}
+                                </div>
+                              )}
                             </button>
                           ))}
                         </div>
