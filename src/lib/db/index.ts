@@ -198,12 +198,11 @@ export async function initializeDatabase() {
   // We need to check if existingUsers is valid.
 
   if (existingUsers && existingUsers.count === 0) {
-    const password1Hash = hashSync('wedding2027', 10)
-    const password2Hash = hashSync('wedding2027', 10)
+    const passwordHash = hashSync('1012', 10)
 
     await db.insert(schema.users).values([
-      { username: 'partner1', passwordHash: password1Hash, name: 'Partner 1', role: 'admin' },
-      { username: 'partner2', passwordHash: password2Hash, name: 'Partner 2', role: 'admin' }
+      { username: 'ramon', passwordHash: passwordHash, name: 'Ramon', role: 'admin' },
+      { username: 'pavi', passwordHash: passwordHash, name: 'Pavi', role: 'admin' }
     ])
   }
 
