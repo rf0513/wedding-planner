@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const { guestId, eventId, rsvpStatus, mealChoice } = body
 
-    sqlite.prepare(`
-      UPDATE guest_events
-      SET rsvp_status = ?, meal_choice = ?
-      WHERE guest_id = ? AND event_id = ?
-    `).run(rsvpStatus, mealChoice || null, guestId, eventId)
+    await client.execute({
+      sql: `UPDATE guest_events SET rsvp_status = ?, meal_choice = ? WHERE guest_id = ? AND event_id = ?`,
+      args: [rsvpStatus, mealChoice || null, guestId, eventId]
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

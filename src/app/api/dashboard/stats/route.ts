@@ -1,43 +1,46 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 const TOTAL_BUDGET = 80000
 
 export async function GET() {
   try {
     // Get budget stats - spent is the sum of actual expenses
-    const budgetStats = sqlite.prepare(`
+    const budgetStatsResult = await client.execute(`
       SELECT
         COALESCE(SUM(actual), 0) as spentBudget
       FROM budget_items
-    `).get() as { spentBudget: number }
+    `)
+    const budgetStats = (budgetStatsResult.rows[0] as unknown as { spentBudget: number }) || { spentBudget: 0 }
 
     // Get guest stats
-    const guestStats = sqlite.prepare(`
+    const guestStatsResult = await client.execute(`
       SELECT COUNT(*) as totalGuests FROM guests
-    `).get() as { totalGuests: number }
+    `)
+    const guestStats = (guestStatsResult.rows[0] as unknown as { totalGuests: number }) || { totalGuests: 0 }
 
-    const confirmedGuests = sqlite.prepare(`
+    const confirmedGuestsResult = await client.execute(`
       SELECT COUNT(DISTINCT g.id) as confirmed
       FROM guests g
       JOIN guest_events ge ON g.id = ge.guest_id
       WHERE ge.rsvp_status = 'confirmed'
-    `).get() as { confirmed: number }
+    `)
+    const confirmedGuests = (confirmedGuestsResult.rows[0] as unknown as { confirmed: number }) || { confirmed: 0 }
 
     // Get task stats
-    const taskStats = sqlite.prepare(`
+    const taskStatsResult = await client.execute(`
       SELECT
         COUNT(*) as totalTasks,
         SUM(CASE WHEN completed = 1 THEN 1 ELSE 0 END) as completedTasks
       FROM tasks
-    `).get() as { totalTasks: number; completedTasks: number }
+    `)
+    const taskStats = (taskStatsResult.rows[0] as unknown as { totalTasks: number; completedTasks: number }) || { totalTasks: 0, completedTasks: 0 }
 
     // Get upcoming events
-    const upcomingEvents = sqlite.prepare(`
+    const upcomingEventsResult = await client.execute(`
       SELECT name, date FROM wedding_events ORDER BY "order" ASC LIMIT 5
-    `).all() as { name: string; date: string }[]
+    `)
+    const upcomingEvents = upcomingEventsResult.rows as unknown as { name: string; date: string }[]
 
     return NextResponse.json({
       totalBudget: TOTAL_BUDGET,

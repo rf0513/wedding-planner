@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 export async function GET() {
   try {
-    const categories = sqlite.prepare(`
+    const categoriesResult = await client.execute(`
       SELECT bc.*,
         COALESCE(SUM(bi.planned), 0) as total_planned,
         COALESCE(SUM(bi.actual), 0) as total_actual,
@@ -14,13 +12,13 @@ export async function GET() {
       LEFT JOIN budget_items bi ON bc.id = bi.category_id
       GROUP BY bc.id
       ORDER BY bc."order" ASC
-    `).all()
+    `)
 
-    const items = sqlite.prepare(`
+    const itemsResult = await client.execute(`
       SELECT * FROM budget_items ORDER BY id ASC
-    `).all()
+    `)
 
-    return NextResponse.json({ categories, items })
+    return NextResponse.json({ categories: categoriesResult.rows, items: itemsResult.rows })
   } catch (error) {
     console.error('Error fetching budget:', error)
     return NextResponse.json({ categories: [], items: [] }, { status: 500 })
@@ -33,30 +31,37 @@ export async function POST(request: NextRequest) {
     const { type, ...data } = body
 
     if (type === 'category') {
-      const result = sqlite.prepare(`
-        INSERT INTO budget_categories (name, event_id, planned_amount, "order")
-        VALUES (?, ?, ?, ?)
-      `).run(data.name, data.eventId || null, data.plannedAmount || 0, data.order || 0)
+      const result = await client.execute({
+        sql: `INSERT INTO budget_categories (name, event_id, planned_amount, "order") VALUES (?, ?, ?, ?)`,
+        args: [data.name, data.eventId || null, data.plannedAmount || 0, data.order || 0]
+      })
 
-      const category = sqlite.prepare('SELECT * FROM budget_categories WHERE id = ?').get(result.lastInsertRowid)
-      return NextResponse.json(category, { status: 201 })
+      const categoryResult = await client.execute({
+        sql: 'SELECT * FROM budget_categories WHERE id = ?',
+        args: [result.lastInsertRowid]
+      })
+
+      return NextResponse.json(categoryResult.rows[0], { status: 201 })
     } else {
-      const result = sqlite.prepare(`
-        INSERT INTO budget_items (category_id, name, vendor, planned, actual, paid, due_date, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        data.categoryId,
-        data.name,
-        data.vendor || null,
-        data.planned || 0,
-        data.actual || 0,
-        data.paid || 0,
-        data.dueDate || null,
-        data.notes || null
-      )
+      const result = await client.execute({
+        sql: `INSERT INTO budget_items (category_id, name, vendor, planned, actual, paid, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [
+          data.categoryId,
+          data.name,
+          data.vendor || null,
+          data.planned || 0,
+          data.actual || 0,
+          data.paid || 0,
+          data.dueDate || null,
+          data.notes || null
+        ]
+      })
 
-      const item = sqlite.prepare('SELECT * FROM budget_items WHERE id = ?').get(result.lastInsertRowid)
-      return NextResponse.json(item, { status: 201 })
+      const itemResult = await client.execute({
+        sql: 'SELECT * FROM budget_items WHERE id = ?',
+        args: [result.lastInsertRowid]
+      })
+      return NextResponse.json(itemResult.rows[0], { status: 201 })
     }
   } catch (error) {
     console.error('Error creating budget entry:', error)
@@ -73,41 +78,44 @@ export async function PUT(request: NextRequest) {
       // Support partial updates - only update fields that are provided
       if (data.plannedAmount !== undefined && !data.name) {
         // Just updating the planned amount
-        sqlite.prepare(`
-          UPDATE budget_categories
-          SET planned_amount = ?
-          WHERE id = ?
-        `).run(data.plannedAmount, id)
+        await client.execute({
+          sql: `UPDATE budget_categories SET planned_amount = ? WHERE id = ?`,
+          args: [data.plannedAmount, id]
+        })
       } else {
         // Full update
-        sqlite.prepare(`
-          UPDATE budget_categories
-          SET name = ?, event_id = ?, planned_amount = ?, "order" = ?
-          WHERE id = ?
-        `).run(data.name, data.eventId || null, data.plannedAmount || 0, data.order || 0, id)
+        await client.execute({
+          sql: `UPDATE budget_categories SET name = ?, event_id = ?, planned_amount = ?, "order" = ? WHERE id = ?`,
+          args: [data.name, data.eventId || null, data.plannedAmount || 0, data.order || 0, id]
+        })
       }
 
-      const category = sqlite.prepare('SELECT * FROM budget_categories WHERE id = ?').get(id)
-      return NextResponse.json(category)
+      const categoryResult = await client.execute({
+        sql: 'SELECT * FROM budget_categories WHERE id = ?',
+        args: [id]
+      })
+      return NextResponse.json(categoryResult.rows[0])
     } else {
-      sqlite.prepare(`
-        UPDATE budget_items
-        SET category_id = ?, name = ?, vendor = ?, planned = ?, actual = ?, paid = ?, due_date = ?, notes = ?
-        WHERE id = ?
-      `).run(
-        data.categoryId,
-        data.name,
-        data.vendor || null,
-        data.planned || 0,
-        data.actual || 0,
-        data.paid || 0,
-        data.dueDate || null,
-        data.notes || null,
-        id
-      )
+      await client.execute({
+        sql: `UPDATE budget_items SET category_id = ?, name = ?, vendor = ?, planned = ?, actual = ?, paid = ?, due_date = ?, notes = ? WHERE id = ?`,
+        args: [
+          data.categoryId,
+          data.name,
+          data.vendor || null,
+          data.planned || 0,
+          data.actual || 0,
+          data.paid || 0,
+          data.dueDate || null,
+          data.notes || null,
+          id
+        ]
+      })
 
-      const item = sqlite.prepare('SELECT * FROM budget_items WHERE id = ?').get(id)
-      return NextResponse.json(item)
+      const itemResult = await client.execute({
+        sql: 'SELECT * FROM budget_items WHERE id = ?',
+        args: [id]
+      })
+      return NextResponse.json(itemResult.rows[0])
     }
   } catch (error) {
     console.error('Error updating budget entry:', error)
@@ -126,10 +134,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     if (type === 'category') {
-      sqlite.prepare('DELETE FROM budget_items WHERE category_id = ?').run(id)
-      sqlite.prepare('DELETE FROM budget_categories WHERE id = ?').run(id)
+      await client.execute({ sql: 'DELETE FROM budget_items WHERE category_id = ?', args: [id] })
+      await client.execute({ sql: 'DELETE FROM budget_categories WHERE id = ?', args: [id] })
     } else {
-      sqlite.prepare('DELETE FROM budget_items WHERE id = ?').run(id)
+      await client.execute({ sql: 'DELETE FROM budget_items WHERE id = ?', args: [id] })
     }
 
     return NextResponse.json({ success: true })

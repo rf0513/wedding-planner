@@ -4,7 +4,7 @@ import * as schema from './schema'
 import { hashSync } from 'bcryptjs'
 import { sql } from 'drizzle-orm'
 
-const client = createClient({
+export const client = createClient({
   url: process.env.DATABASE_URL || 'file:wedding.db',
   authToken: process.env.DATABASE_AUTH_TOKEN,
 })
@@ -16,7 +16,7 @@ export async function initializeDatabase() {
   // Create tables
   // Note: In production with Turso, you might want to use 'drizzle-kit push' or migrations instead of this.
   // But for keeping parity with the existing logic, we'll execute the SQL.
-  
+
   await client.execute(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,11 +179,10 @@ export async function initializeDatabase() {
       location TEXT,
       people TEXT,
       notes TEXT,
-      notes TEXT,
       "order" INTEGER DEFAULT 0
     );
   `)
-  
+
   // Fix for repeated notes column in itinerary_items in previous code potentially? 
   // actually the previous one had notes TEXT twice in my copy paste? No, looking back at tool output...
   // Ah, the original file had `notes: text('notes')` in schema.ts, and I just copied the SQL from the original file's `sqlite.exec`.
@@ -193,18 +192,18 @@ export async function initializeDatabase() {
 
   // Seed default users if not exist
   const existingUsers = await db.select({ count: sql<number>`count(*)` }).from(schema.users).get()
-  
+
   // Drizzle `.get()` with sql returns { count: number } if defining it that way? 
   // Actually db.select().from().get() returns the first row.
   // We need to check if existingUsers is valid.
-  
+
   if (existingUsers && existingUsers.count === 0) {
     const password1Hash = hashSync('wedding2027', 10)
     const password2Hash = hashSync('wedding2027', 10)
 
     await db.insert(schema.users).values([
-        { username: 'partner1', passwordHash: password1Hash, name: 'Partner 1', role: 'admin' },
-        { username: 'partner2', passwordHash: password2Hash, name: 'Partner 2', role: 'admin' }
+      { username: 'partner1', passwordHash: password1Hash, name: 'Partner 1', role: 'admin' },
+      { username: 'partner2', passwordHash: password2Hash, name: 'Partner 2', role: 'admin' }
     ])
   }
 
@@ -238,10 +237,10 @@ export async function initializeDatabase() {
       'Gifts & Favors',
       'Miscellaneous'
     ]
-    
+
     const categories = categoriesNames.map((name, i) => ({
-        name,
-        order: i
+      name,
+      order: i
     }))
 
     await db.insert(schema.budgetCategories).values(categories)

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 interface ImportedGuest {
   first_name: string
@@ -161,10 +159,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Get existing guests for deduplication
-    const existingGuests = sqlite.prepare('SELECT first_name, last_name, email FROM guests').all() as Array<{ first_name: string; last_name: string | null; email: string | null }>
+    const existingGuestsResult = await client.execute('SELECT first_name, last_name, email FROM guests')
+    const existingGuests = existingGuestsResult.rows as unknown as Array<{ first_name: string; last_name: string | null; email: string | null }>
 
     // Get all events with names for matching columns
-    const events = sqlite.prepare('SELECT id, name FROM wedding_events').all() as WeddingEvent[]
+    const eventsResult = await client.execute('SELECT id, name FROM wedding_events')
+    const events = eventsResult.rows as unknown as WeddingEvent[]
 
     // Create a map of normalized event names to event IDs
     const eventNameToId: Record<string, number> = {}
@@ -175,16 +175,6 @@ export async function POST(request: NextRequest) {
     let imported = 0
     let skipped = 0
     const errors: string[] = []
-
-    const insertGuest = sqlite.prepare(`
-      INSERT INTO guests (first_name, last_name, email, phone, "group", meal_preference, dietary_restrictions, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `)
-
-    const insertGuestEvent = sqlite.prepare(`
-      INSERT INTO guest_events (guest_id, event_id, rsvp_status)
-      VALUES (?, ?, 'pending')
-    `)
 
     // Check if any row has event columns specified
     const firstRow = rows[0]
@@ -217,31 +207,40 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const result = insertGuest.run(
-          guest.first_name,
-          guest.last_name || null,
-          guest.email || null,
-          guest.phone || null,
-          guest.group || null,
-          guest.meal_preference || null,
-          guest.dietary_restrictions || null,
-          guest.notes || null
-        )
+        const result = await client.execute({
+          sql: `INSERT INTO guests (first_name, last_name, email, phone, "group", meal_preference, dietary_restrictions, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          args: [
+            guest.first_name,
+            guest.last_name || null,
+            guest.email || null,
+            guest.phone || null,
+            guest.group || null,
+            guest.meal_preference || null,
+            guest.dietary_restrictions || null,
+            guest.notes || null
+          ]
+        })
 
         const guestId = result.lastInsertRowid
 
         // Determine which events to add the guest to
-        if (hasEventColumns) {
+        if (hasEventColumns && guestId) {
           // Add guest only to events marked as true in the spreadsheet
           for (const [normalizedName, eventId] of Object.entries(eventNameToId)) {
             if (isTruthyValue(row[normalizedName])) {
-              insertGuestEvent.run(guestId, eventId)
+              await client.execute({
+                sql: `INSERT INTO guest_events (guest_id, event_id, rsvp_status) VALUES (?, ?, 'pending')`,
+                args: [guestId, eventId]
+              })
             }
           }
-        } else {
+        } else if (guestId) {
           // No event columns specified - add guest to all events (backward compatible)
           for (const event of events) {
-            insertGuestEvent.run(guestId, event.id)
+            await client.execute({
+              sql: `INSERT INTO guest_events (guest_id, event_id, rsvp_status) VALUES (?, ?, 'pending')`,
+              args: [guestId, event.id]
+            })
           }
         }
 

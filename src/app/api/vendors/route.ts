@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 export async function GET() {
   try {
-    const vendors = sqlite.prepare(`
+    const vendorsResult = await client.execute(`
       SELECT * FROM vendors ORDER BY category, name
-    `).all()
+    `)
 
-    return NextResponse.json(vendors)
+    return NextResponse.json(vendorsResult.rows)
   } catch (error) {
     console.error('Error fetching vendors:', error)
     return NextResponse.json([], { status: 500 })
@@ -24,16 +22,19 @@ export async function POST(request: NextRequest) {
       website, contractUrl, totalCost, paid, notes
     } = body
 
-    const result = sqlite.prepare(`
-      INSERT INTO vendors (category, name, contact_name, email, phone, website, contract_url, total_cost, paid, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      category, name, contactName || null, email || null, phone || null,
-      website || null, contractUrl || null, totalCost || 0, paid || 0, notes || null
-    )
+    const result = await client.execute({
+      sql: `INSERT INTO vendors (category, name, contact_name, email, phone, website, contract_url, total_cost, paid, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        category, name, contactName || null, email || null, phone || null,
+        website || null, contractUrl || null, totalCost || 0, paid || 0, notes || null
+      ]
+    })
 
-    const vendor = sqlite.prepare('SELECT * FROM vendors WHERE id = ?').get(result.lastInsertRowid)
-    return NextResponse.json(vendor, { status: 201 })
+    const vendorResult = await client.execute({
+      sql: 'SELECT * FROM vendors WHERE id = ?',
+      args: [result.lastInsertRowid!]
+    })
+    return NextResponse.json(vendorResult.rows[0], { status: 201 })
   } catch (error) {
     console.error('Error creating vendor:', error)
     return NextResponse.json({ error: 'Failed to create vendor' }, { status: 500 })
@@ -48,18 +49,19 @@ export async function PUT(request: NextRequest) {
       website, contractUrl, totalCost, paid, notes
     } = body
 
-    sqlite.prepare(`
-      UPDATE vendors
-      SET category = ?, name = ?, contact_name = ?, email = ?, phone = ?,
-          website = ?, contract_url = ?, total_cost = ?, paid = ?, notes = ?
-      WHERE id = ?
-    `).run(
-      category, name, contactName || null, email || null, phone || null,
-      website || null, contractUrl || null, totalCost || 0, paid || 0, notes || null, id
-    )
+    await client.execute({
+      sql: `UPDATE vendors SET category = ?, name = ?, contact_name = ?, email = ?, phone = ?, website = ?, contract_url = ?, total_cost = ?, paid = ?, notes = ? WHERE id = ?`,
+      args: [
+        category, name, contactName || null, email || null, phone || null,
+        website || null, contractUrl || null, totalCost || 0, paid || 0, notes || null, id
+      ]
+    })
 
-    const vendor = sqlite.prepare('SELECT * FROM vendors WHERE id = ?').get(id)
-    return NextResponse.json(vendor)
+    const vendorResult = await client.execute({
+      sql: 'SELECT * FROM vendors WHERE id = ?',
+      args: [id]
+    })
+    return NextResponse.json(vendorResult.rows[0])
   } catch (error) {
     console.error('Error updating vendor:', error)
     return NextResponse.json({ error: 'Failed to update vendor' }, { status: 500 })
@@ -75,7 +77,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Vendor ID required' }, { status: 400 })
     }
 
-    sqlite.prepare('DELETE FROM vendors WHERE id = ?').run(id)
+    await client.execute({ sql: 'DELETE FROM vendors WHERE id = ?', args: [id] })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting vendor:', error)

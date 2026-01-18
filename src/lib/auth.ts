@@ -1,9 +1,9 @@
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { db } from '@/lib/db'
+import { users } from '@/lib/db/schema'
+import { eq } from 'drizzle-orm'
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -18,19 +18,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null
         }
 
-        const user = sqlite.prepare('SELECT * FROM users WHERE username = ?').get(credentials.username) as {
-          id: number
-          username: string
-          password_hash: string
-          name: string
-          role: string
-        } | undefined
+        const user = await db.select().from(users).where(eq(users.username, credentials.username as string)).get()
 
         if (!user) {
           return null
         }
 
-        const passwordMatch = await compare(credentials.password as string, user.password_hash)
+        const passwordMatch = await compare(credentials.password as string, user.passwordHash)
 
         if (!passwordMatch) {
           return null

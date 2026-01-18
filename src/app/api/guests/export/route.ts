@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 interface GuestRow {
   id: number
@@ -33,17 +31,19 @@ function escapeCSV(value: string | null | undefined): string {
 
 export async function GET() {
   try {
-    const guests = sqlite.prepare(`
+    const guestsResult = await client.execute(`
       SELECT id, first_name, last_name, email, phone, "group", meal_preference, dietary_restrictions, notes
       FROM guests
       ORDER BY last_name, first_name
-    `).all() as GuestRow[]
+    `)
+    const guests = guestsResult.rows as unknown as GuestRow[]
 
-    const guestEvents = sqlite.prepare(`
+    const guestEventsResult = await client.execute(`
       SELECT ge.guest_id, we.name as event_name, ge.rsvp_status
       FROM guest_events ge
       JOIN wedding_events we ON ge.event_id = we.id
-    `).all() as GuestEventRow[]
+    `)
+    const guestEvents = guestEventsResult.rows as unknown as GuestEventRow[]
 
     // Get unique event names for columns
     const eventNames = [...new Set(guestEvents.map(ge => ge.event_name))]

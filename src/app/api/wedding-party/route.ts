@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import Database from 'better-sqlite3'
-
-const sqlite = new Database('wedding.db')
+import { client } from '@/lib/db'
 
 export async function GET() {
   try {
-    const members = sqlite.prepare(`
+    const membersResult = await client.execute(`
       SELECT * FROM wedding_party ORDER BY side, role
-    `).all()
+    `)
 
-    return NextResponse.json(members)
+    return NextResponse.json(membersResult.rows)
   } catch (error) {
     console.error('Error fetching wedding party:', error)
     return NextResponse.json([], { status: 500 })
@@ -21,13 +19,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, role, side, email, phone, responsibilities, attireDetails, notes } = body
 
-    const result = sqlite.prepare(`
-      INSERT INTO wedding_party (name, role, side, email, phone, responsibilities, attire_details, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(name, role, side || null, email || null, phone || null, responsibilities || null, attireDetails || null, notes || null)
+    const result = await client.execute({
+      sql: `INSERT INTO wedding_party (name, role, side, email, phone, responsibilities, attire_details, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [name, role, side || null, email || null, phone || null, responsibilities || null, attireDetails || null, notes || null]
+    })
 
-    const member = sqlite.prepare('SELECT * FROM wedding_party WHERE id = ?').get(result.lastInsertRowid)
-    return NextResponse.json(member, { status: 201 })
+    const memberResult = await client.execute({
+      sql: 'SELECT * FROM wedding_party WHERE id = ?',
+      args: [result.lastInsertRowid!]
+    })
+    return NextResponse.json(memberResult.rows[0], { status: 201 })
   } catch (error) {
     console.error('Error creating wedding party member:', error)
     return NextResponse.json({ error: 'Failed to create wedding party member' }, { status: 500 })
@@ -39,14 +40,16 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const { id, name, role, side, email, phone, responsibilities, attireDetails, notes } = body
 
-    sqlite.prepare(`
-      UPDATE wedding_party
-      SET name = ?, role = ?, side = ?, email = ?, phone = ?, responsibilities = ?, attire_details = ?, notes = ?
-      WHERE id = ?
-    `).run(name, role, side || null, email || null, phone || null, responsibilities || null, attireDetails || null, notes || null, id)
+    await client.execute({
+      sql: `UPDATE wedding_party SET name = ?, role = ?, side = ?, email = ?, phone = ?, responsibilities = ?, attire_details = ?, notes = ? WHERE id = ?`,
+      args: [name, role, side || null, email || null, phone || null, responsibilities || null, attireDetails || null, notes || null, id]
+    })
 
-    const member = sqlite.prepare('SELECT * FROM wedding_party WHERE id = ?').get(id)
-    return NextResponse.json(member)
+    const memberResult = await client.execute({
+      sql: 'SELECT * FROM wedding_party WHERE id = ?',
+      args: [id]
+    })
+    return NextResponse.json(memberResult.rows[0])
   } catch (error) {
     console.error('Error updating wedding party member:', error)
     return NextResponse.json({ error: 'Failed to update wedding party member' }, { status: 500 })
@@ -62,7 +65,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Member ID required' }, { status: 400 })
     }
 
-    sqlite.prepare('DELETE FROM wedding_party WHERE id = ?').run(id)
+    await client.execute({ sql: 'DELETE FROM wedding_party WHERE id = ?', args: [id] })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting wedding party member:', error)
