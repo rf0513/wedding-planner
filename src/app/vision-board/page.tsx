@@ -262,7 +262,7 @@ export default function VisionBoardPage() {
                 Add to {currentEvent?.name || 'Event'}
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-4xl">
               <form onSubmit={handleSubmit}>
                 <DialogHeader>
                   <DialogTitle>Add Inspiration</DialogTitle>
@@ -331,7 +331,7 @@ export default function VisionBoardPage() {
                       </div>
 
                       {searchResults.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto pr-1">
                           {searchResults.map((photo: any) => (
                             <button
                               key={photo.id}
