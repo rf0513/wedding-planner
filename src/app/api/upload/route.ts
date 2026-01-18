@@ -24,12 +24,19 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        // Ensure uploads directory exists
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'vision-board')
+        // Ensure uploads directory exists - use path.resolve for reliable Windows path handling
+        const uploadDir = path.resolve('./public/uploads/vision-board')
+        console.log('Upload dir:', uploadDir)
+
         try {
             await mkdir(uploadDir, { recursive: true })
-        } catch (e) {
-            // Ignore if exists
+            console.log('Upload directory created/verified:', uploadDir)
+        } catch (mkdirError) {
+            console.error('Failed to create upload directory:', mkdirError)
+            return NextResponse.json({
+                error: 'Failed to create upload directory',
+                details: mkdirError instanceof Error ? mkdirError.message : 'Unknown error'
+            }, { status: 500 })
         }
 
         // Generate unique filename
@@ -46,6 +53,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ url: publicUrl })
     } catch (error) {
         console.error('Upload error:', error)
-        return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+        return NextResponse.json({
+            error: 'Upload failed',
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 })
     }
 }
