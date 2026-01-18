@@ -196,6 +196,7 @@ export default function VisionBoardPage() {
     setIsUploading(true)
     setUploadProgress({ current: 0, total: files.length })
     let successCount = 0
+    const failures: string[] = []
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
@@ -211,10 +212,12 @@ export default function VisionBoardPage() {
         })
 
         const uploadJson = await uploadRes.json()
-        if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload failed')
+        if (!uploadRes.ok) {
+          throw new Error(uploadJson.error || uploadJson.details || 'Upload failed')
+        }
 
         // Create vision board item
-        await fetch("/api/vision", {
+        const visionRes = await fetch("/api/vision", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -224,8 +227,14 @@ export default function VisionBoardPage() {
             notes: ""
           })
         })
+
+        if (!visionRes.ok) {
+          throw new Error('Failed to save to vision board')
+        }
         successCount++
       } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+        failures.push(`${file.name}: ${errorMsg}`)
         console.error(`Failed to upload ${file.name}:`, error)
       }
     }
@@ -239,8 +248,8 @@ export default function VisionBoardPage() {
       setDialogOpen(false)
       resetForm()
     }
-    if (successCount < files.length) {
-      alert(`Uploaded ${successCount} of ${files.length} images. Some uploads failed.`)
+    if (failures.length > 0) {
+      alert(`Uploaded ${successCount} of ${files.length} images.\n\nFailed:\n${failures.join('\n')}`)
     }
   }
 
@@ -463,7 +472,7 @@ export default function VisionBoardPage() {
                                 : "Click to upload or drag & drop"}
                             </span>
                             <span className="text-xs text-[var(--muted-foreground)]">
-                              JPG, PNG, WebP, HEIC up to 5MB (select multiple)
+                              JPG, PNG, WebP, HEIC up to 10MB (select multiple)
                             </span>
                           </Label>
                         </div>

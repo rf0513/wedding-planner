@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: `Invalid file type: ${file.type}` }, { status: 400 })
         }
 
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            return NextResponse.json({ error: 'File size too large (max 5MB)' }, { status: 400 })
+        // Validate file size (10MB for high-res phone photos)
+        if (file.size > 10 * 1024 * 1024) {
+            return NextResponse.json({ error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 10MB)` }, { status: 400 })
         }
 
         // Upload to Vercel Blob
