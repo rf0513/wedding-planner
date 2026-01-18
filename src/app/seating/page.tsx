@@ -388,7 +388,7 @@ export default function SeatingPage() {
                 {unassignedGuests.length === 0 ? (
                   <p className="text-sm text-[var(--muted-foreground)]">All guests are seated!</p>
                 ) : (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                  <div className="space-y-2 max-h-48 sm:max-h-64 overflow-y-auto">
                     {unassignedGuests.map(guest => (
                       <div key={guest.id} className="flex items-center justify-between p-2 rounded bg-[var(--muted)]">
                         <div>

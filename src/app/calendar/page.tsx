@@ -294,7 +294,7 @@ export default function CalendarPage() {
             <CardDescription>February 2-6, 2027</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-5">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
               {events.slice(0, 5).map((event, i) => (
                 <div
                   key={event.id}

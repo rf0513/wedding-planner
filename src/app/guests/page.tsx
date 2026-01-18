@@ -293,7 +293,7 @@ export default function GuestsPage() {
 
                   <div className="p-4 border rounded-lg">
                     <h4 className="font-medium mb-2">Optional Columns</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">last_name</Badge>
                         <span className="text-[var(--muted-foreground)]">Last name</span>
@@ -424,7 +424,7 @@ export default function GuestsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First Name *</Label>
                       <Input
@@ -443,7 +443,7 @@ export default function GuestsPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -462,7 +462,7 @@ export default function GuestsPage() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="group">Group</Label>
                       <Select
@@ -507,7 +507,7 @@ export default function GuestsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Events Attending</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {events.map((event) => (
                         <div key={event.id} className="flex items-center gap-2">
                           <Checkbox
@@ -587,7 +587,7 @@ export default function GuestsPage() {
             />
           </div>
           <Select value={filterGroup} onValueChange={setFilterGroup}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Filter by group" />
             </SelectTrigger>
             <SelectContent>

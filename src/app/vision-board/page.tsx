@@ -266,18 +266,25 @@ export default function VisionBoardPage() {
 
   const saveColors = async () => {
     const event = getCurrentEvent()
-    if (!event) return
+    if (!event) {
+      alert("Could not find the current event. Please try refreshing the page.")
+      return
+    }
 
     try {
-      await fetch("/api/events", {
+      const res = await fetch("/api/events", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: event.id, colors: selectedColors })
       })
+
+      if (!res.ok) throw new Error("Failed to save")
+
       fetchData()
       setColorPickerOpen(false)
     } catch (error) {
       console.error("Failed to save colors:", error)
+      alert("Failed to save colors. Please try again.")
     }
   }
 

@@ -78,21 +78,21 @@ export function DashboardContent() {
             <PartyPopper className="w-6 h-6" />
             <span className="font-medium">Countdown to Your Big Day</span>
           </div>
-          <div className="grid grid-cols-4 gap-4 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
             <div>
-              <div className="text-4xl md:text-5xl font-bold">{countdown.days}</div>
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold">{countdown.days}</div>
               <div className="text-sm opacity-80">Days</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold">{countdown.hours}</div>
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold">{countdown.hours}</div>
               <div className="text-sm opacity-80">Hours</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold">{countdown.minutes}</div>
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold">{countdown.minutes}</div>
               <div className="text-sm opacity-80">Minutes</div>
             </div>
             <div>
-              <div className="text-4xl md:text-5xl font-bold">{countdown.seconds}</div>
+              <div className="text-2xl sm:text-4xl md:text-5xl font-bold">{countdown.seconds}</div>
               <div className="text-sm opacity-80">Seconds</div>
             </div>
           </div>

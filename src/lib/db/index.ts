@@ -37,9 +37,17 @@ export async function initializeDatabase() {
       end_time TEXT,
       venue TEXT,
       description TEXT,
+      colors TEXT,
       "order" INTEGER DEFAULT 0
     );
   `)
+
+  // Migration: Add colors column if it doesn't exist
+  try {
+    await client.execute(`ALTER TABLE wedding_events ADD COLUMN colors TEXT`)
+  } catch (error) {
+    // Ignore error if column already exists
+  }
 
   await client.execute(`
     CREATE TABLE IF NOT EXISTS budget_categories (
