@@ -15,13 +15,24 @@ export async function GET() {
     `)
 
     const itemsResult = await client.execute(`
-      SELECT * FROM budget_items ORDER BY id ASC
+      SELECT bi.*, we.name as event_name 
+      FROM budget_items bi
+      LEFT JOIN wedding_events we ON bi.event_id = we.id
+      ORDER BY bi.id ASC
     `)
 
-    return NextResponse.json({ categories: categoriesResult.rows, items: itemsResult.rows })
+    const eventsResult = await client.execute(`
+      SELECT * FROM wedding_events ORDER BY "order" ASC
+    `)
+
+    return NextResponse.json({
+      categories: categoriesResult.rows,
+      items: itemsResult.rows,
+      events: eventsResult.rows
+    })
   } catch (error) {
     console.error('Error fetching budget:', error)
-    return NextResponse.json({ categories: [], items: [] }, { status: 500 })
+    return NextResponse.json({ categories: [], items: [], events: [] }, { status: 500 })
   }
 }
 
@@ -44,9 +55,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(categoryResult.rows[0], { status: 201 })
     } else {
       const result = await client.execute({
-        sql: `INSERT INTO budget_items (category_id, name, vendor, planned, actual, paid, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        sql: `INSERT INTO budget_items (category_id, event_id, name, vendor, planned, actual, paid, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         args: [
           data.categoryId,
+          data.eventId || null,
           data.name,
           data.vendor || null,
           data.planned || 0,
@@ -97,9 +109,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json(categoryResult.rows[0])
     } else {
       await client.execute({
-        sql: `UPDATE budget_items SET category_id = ?, name = ?, vendor = ?, planned = ?, actual = ?, paid = ?, due_date = ?, notes = ? WHERE id = ?`,
+        sql: `UPDATE budget_items SET category_id = ?, event_id = ?, name = ?, vendor = ?, planned = ?, actual = ?, paid = ?, due_date = ?, notes = ? WHERE id = ?`,
         args: [
           data.categoryId,
+          data.eventId || null,
           data.name,
           data.vendor || null,
           data.planned || 0,

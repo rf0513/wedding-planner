@@ -35,6 +35,7 @@ export const budgetCategories = sqliteTable('budget_categories', {
 export const budgetItems = sqliteTable('budget_items', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   categoryId: integer('category_id').references(() => budgetCategories.id),
+  eventId: integer('event_id').references(() => weddingEvents.id),
   name: text('name').notNull(),
   vendor: text('vendor'),
   planned: real('planned').default(0),

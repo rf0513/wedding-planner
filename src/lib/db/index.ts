@@ -55,6 +55,7 @@ export async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS budget_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       category_id INTEGER REFERENCES budget_categories(id),
+      event_id INTEGER REFERENCES wedding_events(id),
       name TEXT NOT NULL,
       vendor TEXT,
       planned REAL DEFAULT 0,

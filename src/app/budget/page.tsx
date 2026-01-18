@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, Trash2, Edit, DollarSign, TrendingUp, TrendingDown, PieChart, Sliders } from "lucide-react"
+import { Plus, Trash2, Edit, DollarSign, TrendingUp, TrendingDown, PieChart, Sliders, Calendar } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 const TOTAL_BUDGET = 80000
@@ -29,6 +29,8 @@ interface BudgetCategory {
 interface BudgetItem {
   id: number
   category_id: number
+  event_id: number | null
+  event_name?: string
   name: string
   vendor: string | null
   planned: number
@@ -36,6 +38,13 @@ interface BudgetItem {
   paid: number
   due_date: string | null
   notes: string | null
+}
+
+interface WeddingEvent {
+  id: number
+  name: string
+  date: string
+  order: number
 }
 
 // Colors for budget visualization
@@ -56,6 +65,7 @@ const CATEGORY_COLORS = [
 export default function BudgetPage() {
   const [categories, setCategories] = useState<BudgetCategory[]>([])
   const [items, setItems] = useState<BudgetItem[]>([])
+  const [events, setEvents] = useState<WeddingEvent[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<BudgetItem | null>(null)
@@ -64,6 +74,7 @@ export default function BudgetPage() {
 
   const [formData, setFormData] = useState({
     categoryId: "",
+    eventId: "0", // "0" means None/Unassigned
     name: "",
     vendor: "",
     planned: "",
@@ -79,6 +90,7 @@ export default function BudgetPage() {
       const data = await res.json()
       setCategories(data.categories || [])
       setItems(data.items || [])
+      setEvents(data.events || [])
       // Initialize category budgets from fetched data
       const budgets: Record<number, string> = {}
       for (const cat of data.categories || []) {
@@ -133,10 +145,12 @@ export default function BudgetPage() {
     e.preventDefault()
 
     const method = editingItem ? "PUT" : "POST"
+    const eventIdVal = parseInt(formData.eventId)
     const body = {
       type: "item",
       id: editingItem?.id,
       categoryId: parseInt(formData.categoryId),
+      eventId: eventIdVal === 0 ? null : eventIdVal,
       name: formData.name,
       vendor: formData.vendor || null,
       planned: parseFloat(formData.planned) || 0,
@@ -174,6 +188,7 @@ export default function BudgetPage() {
   const resetForm = () => {
     setFormData({
       categoryId: "",
+      eventId: "0",
       name: "",
       vendor: "",
       planned: "",
@@ -189,6 +204,7 @@ export default function BudgetPage() {
     setEditingItem(item)
     setFormData({
       categoryId: String(item.category_id),
+      eventId: item.event_id ? String(item.event_id) : "0",
       name: item.name,
       vendor: item.vendor || "",
       planned: String(item.planned),
@@ -245,24 +261,46 @@ export default function BudgetPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Category *</Label>
-                    <Select
-                      value={formData.categoryId}
-                      onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((c) => (
-                          <SelectItem key={c.id} value={String(c.id)}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select
+                        value={formData.categoryId}
+                        onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={String(c.id)}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="event">Event (Optional)</Label>
+                      <Select
+                        value={formData.eventId}
+                        onValueChange={(value) => setFormData({ ...formData, eventId: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select event" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">General / None</SelectItem>
+                          {events.map((e) => (
+                            <SelectItem key={e.id} value={String(e.id)}>
+                              {e.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="name">Item Name *</Label>
                     <Input
@@ -397,9 +435,13 @@ export default function BudgetPage() {
             </TabsTrigger>
             <TabsTrigger value="overview">
               <PieChart className="w-4 h-4 mr-2" />
-              Overview
+              Category Overview
             </TabsTrigger>
-            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="by-event">
+              <Calendar className="w-4 h-4 mr-2" />
+              By Event
+            </TabsTrigger>
+            <TabsTrigger value="details">All Expenses</TabsTrigger>
           </TabsList>
 
           <TabsContent value="plan" className="mt-4">
@@ -472,7 +514,7 @@ export default function BudgetPage() {
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                 handleCategoryBudgetBlur(category.id)
-                                ;(e.target as HTMLInputElement).blur()
+                                  ; (e.target as HTMLInputElement).blur()
                               }
                             }}
                             placeholder="0"
@@ -550,6 +592,61 @@ export default function BudgetPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="by-event" className="mt-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {events.map((event) => {
+                const eventItems = items.filter(i => i.event_id === event.id)
+                const eventTotal = eventItems.reduce((sum, item) => sum + (item.actual || 0), 0)
+
+                return (
+                  <Card key={event.id}>
+                    <CardHeader>
+                      <CardTitle>{event.name}</CardTitle>
+                      <CardDescription>{formatCurrency(eventTotal)} total expenses</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {eventItems.length === 0 ? (
+                        <p className="text-sm text-[var(--muted-foreground)]">No expenses assigned.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {eventItems.map(item => (
+                            <div key={item.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                              <span>{item.name}</span>
+                              <span className="font-medium">{formatCurrency(item.actual)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+
+              {/* Unassigned Items */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>General / Unassigned</CardTitle>
+                  <CardDescription>
+                    {formatCurrency(items.filter(i => !i.event_id).reduce((sum, item) => sum + (item.actual || 0), 0))} total
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {items.filter(i => !i.event_id).map(item => (
+                      <div key={item.id} className="flex justify-between text-sm border-b pb-1 last:border-0">
+                        <span>{item.name}</span>
+                        <span className="font-medium">{formatCurrency(item.actual)}</span>
+                      </div>
+                    ))}
+                    {items.filter(i => !i.event_id).length === 0 && (
+                      <p className="text-sm text-[var(--muted-foreground)]">No unassigned expenses.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
           <TabsContent value="details" className="mt-4">
             <Card>
               <CardContent className="pt-6">
@@ -566,6 +663,7 @@ export default function BudgetPage() {
                         <tr className="border-b">
                           <th className="text-left py-3 px-2">Item</th>
                           <th className="text-left py-3 px-2">Category</th>
+                          <th className="text-left py-3 px-2">Event</th>
                           <th className="text-right py-3 px-2">Planned</th>
                           <th className="text-right py-3 px-2">Actual</th>
                           <th className="text-right py-3 px-2">Paid</th>
@@ -585,6 +683,9 @@ export default function BudgetPage() {
                               </td>
                               <td className="py-3 px-2 text-[var(--muted-foreground)]">
                                 {category?.name}
+                              </td>
+                              <td className="py-3 px-2 text-[var(--muted-foreground)]">
+                                {item.event_name || '-'}
                               </td>
                               <td className="py-3 px-2 text-right">{formatCurrency(item.planned)}</td>
                               <td className="py-3 px-2 text-right">{formatCurrency(item.actual)}</td>
