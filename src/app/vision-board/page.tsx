@@ -74,6 +74,7 @@ export default function VisionBoardPage() {
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [dragActive, setDragActive] = useState(false)
 
   useEffect(() => {
@@ -146,39 +147,100 @@ export default function VisionBoardPage() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     e.preventDefault()
-    let file: File | null = null
+    let files: File[] = []
 
     if ('dataTransfer' in e) {
-      file = e.dataTransfer.files[0]
+      files = Array.from(e.dataTransfer.files)
     } else if (e.target.files) {
-      file = e.target.files[0]
+      files = Array.from(e.target.files)
     }
 
-    if (!file) return
+    if (files.length === 0) return
+
+    // Single file: just set form data for preview
+    if (files.length === 1) {
+      const file = files[0]
+      setIsUploading(true)
+      const data = new FormData()
+      data.append('file', file)
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: data
+        })
+
+        const json = await res.json()
+        if (!res.ok) throw new Error(json.error || json.details || 'Upload failed')
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: json.url,
+          title: prev.title || file.name.replace(/\.[^/.]+$/, "") || ""
+        }))
+      } catch (error) {
+        console.error("Upload error:", error)
+        alert(error instanceof Error ? error.message : "Failed to upload image. Please try again.")
+      } finally {
+        setIsUploading(false)
+        setDragActive(false)
+      }
+      return
+    }
+
+    // Multiple files: upload all and create items automatically
+    if (!formData.section) {
+      alert("Please select an event first before uploading multiple images.")
+      return
+    }
 
     setIsUploading(true)
-    const data = new FormData()
-    data.append('file', file)
+    setUploadProgress({ current: 0, total: files.length })
+    let successCount = 0
 
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: data
-      })
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      setUploadProgress({ current: i + 1, total: files.length })
 
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || json.details || 'Upload failed')
-      setFormData(prev => ({
-        ...prev,
-        imageUrl: json.url,
-        title: prev.title || file?.name.replace(/\.[^/.]+$/, "") || ""
-      }))
-    } catch (error) {
-      console.error("Upload error:", error)
-      alert(error instanceof Error ? error.message : "Failed to upload image. Please try again.")
-    } finally {
-      setIsUploading(false)
-      setDragActive(false)
+      try {
+        const data = new FormData()
+        data.append('file', file)
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: data
+        })
+
+        const uploadJson = await uploadRes.json()
+        if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload failed')
+
+        // Create vision board item
+        await fetch("/api/vision", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            section: formData.section,
+            imageUrl: uploadJson.url,
+            title: file.name.replace(/\.[^/.]+$/, ""),
+            notes: ""
+          })
+        })
+        successCount++
+      } catch (error) {
+        console.error(`Failed to upload ${file.name}:`, error)
+      }
+    }
+
+    setIsUploading(false)
+    setUploadProgress({ current: 0, total: 0 })
+    setDragActive(false)
+    fetchData()
+
+    if (successCount > 0) {
+      setDialogOpen(false)
+      resetForm()
+    }
+    if (successCount < files.length) {
+      alert(`Uploaded ${successCount} of ${files.length} images. Some uploads failed.`)
     }
   }
 
@@ -384,6 +446,7 @@ export default function VisionBoardPage() {
                             id="file-upload"
                             className="hidden"
                             accept="image/*"
+                            multiple
                             onChange={handleFileUpload}
                           />
                           <Label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
@@ -393,10 +456,14 @@ export default function VisionBoardPage() {
                               <UploadIcon className="w-10 h-10 text-[var(--muted-foreground)]" />
                             )}
                             <span className="text-sm font-medium">
-                              {isUploading ? "Uploading..." : "Click to upload or drag & drop"}
+                              {isUploading
+                                ? uploadProgress.total > 1
+                                  ? `Uploading ${uploadProgress.current} of ${uploadProgress.total}...`
+                                  : "Uploading..."
+                                : "Click to upload or drag & drop"}
                             </span>
                             <span className="text-xs text-[var(--muted-foreground)]">
-                              JPG, PNG, WebP up to 5MB
+                              JPG, PNG, WebP, HEIC up to 5MB (select multiple)
                             </span>
                           </Label>
                         </div>
