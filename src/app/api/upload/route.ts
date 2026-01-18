@@ -27,8 +27,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB (max 10MB)` }, { status: 400 })
         }
 
+        // Sanitize filename for Vercel Blob (remove special chars, keep extension)
+        const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+        const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+
         // Upload to Vercel Blob
-        const blob = await put(`vision-board/${file.name}`, file, {
+        const blob = await put(`vision-board/${safeName}`, file, {
             access: 'public',
         })
 
