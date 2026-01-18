@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { upload } from "@vercel/blob/client"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -145,6 +146,19 @@ export default function VisionBoardPage() {
     }
   }
 
+  const uploadFile = async (file: File): Promise<string> => {
+    // Generate safe filename
+    const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+    const safeExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'].includes(ext) ? ext : 'jpg'
+    const safeName = `vision-board/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExt}`
+
+    const blob = await upload(safeName, file, {
+      access: 'public',
+      handleUploadUrl: '/api/upload',
+    })
+    return blob.url
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
     e.preventDefault()
     let files: File[] = []
@@ -161,20 +175,12 @@ export default function VisionBoardPage() {
     if (files.length === 1) {
       const file = files[0]
       setIsUploading(true)
-      const data = new FormData()
-      data.append('file', file)
 
       try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: data
-        })
-
-        const json = await res.json()
-        if (!res.ok) throw new Error(json.error || json.details || 'Upload failed')
+        const url = await uploadFile(file)
         setFormData(prev => ({
           ...prev,
-          imageUrl: json.url,
+          imageUrl: url,
           title: prev.title || file.name.replace(/\.[^/.]+$/, "") || ""
         }))
       } catch (error) {
@@ -203,18 +209,7 @@ export default function VisionBoardPage() {
       setUploadProgress({ current: i + 1, total: files.length })
 
       try {
-        const data = new FormData()
-        data.append('file', file)
-
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: data
-        })
-
-        const uploadJson = await uploadRes.json()
-        if (!uploadRes.ok) {
-          throw new Error(uploadJson.error || uploadJson.details || 'Upload failed')
-        }
+        const url = await uploadFile(file)
 
         // Create vision board item
         const visionRes = await fetch("/api/vision", {
@@ -222,7 +217,7 @@ export default function VisionBoardPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             section: formData.section,
-            imageUrl: uploadJson.url,
+            imageUrl: url,
             title: file.name.replace(/\.[^/.]+$/, ""),
             notes: ""
           })
