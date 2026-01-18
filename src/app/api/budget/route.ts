@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
       const categoryResult = await client.execute({
         sql: 'SELECT * FROM budget_categories WHERE id = ?',
-        args: [result.lastInsertRowid]
+        args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
       })
 
       return NextResponse.json(categoryResult.rows[0], { status: 201 })
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
       const itemResult = await client.execute({
         sql: 'SELECT * FROM budget_items WHERE id = ?',
-        args: [result.lastInsertRowid]
+        args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
       })
       return NextResponse.json(itemResult.rows[0], { status: 201 })
     }

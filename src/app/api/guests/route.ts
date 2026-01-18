@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       ]
     })
 
-    const guestId = result.lastInsertRowid
+    const guestId = result.lastInsertRowid ? Number(result.lastInsertRowid) : 0
 
     // Add guest to selected events
     if (eventIds && eventIds.length > 0 && guestId) {
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const guestResult = await client.execute({
       sql: 'SELECT * FROM guests WHERE id = ?',
-      args: [guestId!]
+      args: [guestId]
     })
     return NextResponse.json(guestResult.rows[0], { status: 201 })
   } catch (error) {

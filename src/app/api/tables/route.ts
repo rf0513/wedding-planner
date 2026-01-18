@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const tableResult = await client.execute({
       sql: 'SELECT * FROM tables WHERE id = ?',
-      args: [result.lastInsertRowid!]
+      args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
     })
     return NextResponse.json(tableResult.rows[0], { status: 201 })
   } catch (error) {

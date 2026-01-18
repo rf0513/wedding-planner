@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const itemResult = await client.execute({
       sql: 'SELECT * FROM vision_items WHERE id = ?',
-      args: [result.lastInsertRowid!]
+      args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
     })
     return NextResponse.json(itemResult.rows[0], { status: 201 })
   } catch (error) {

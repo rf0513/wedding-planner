@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     const eventResult = await client.execute({
       sql: 'SELECT * FROM wedding_events WHERE id = ?',
-      args: [result.lastInsertRowid]
+      args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
     })
     return NextResponse.json(eventResult.rows[0], { status: 201 })
   } catch (error) {

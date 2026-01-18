@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
           ]
         })
 
-        const guestId = result.lastInsertRowid
+        const guestId = result.lastInsertRowid ? Number(result.lastInsertRowid) : 0
 
         // Determine which events to add the guest to
         if (hasEventColumns && guestId) {

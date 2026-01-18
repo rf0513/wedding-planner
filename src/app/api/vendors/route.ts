@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     const vendorResult = await client.execute({
       sql: 'SELECT * FROM vendors WHERE id = ?',
-      args: [result.lastInsertRowid!]
+      args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
     })
     return NextResponse.json(vendorResult.rows[0], { status: 201 })
   } catch (error) {

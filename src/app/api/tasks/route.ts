@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const taskResult = await client.execute({
       sql: 'SELECT * FROM tasks WHERE id = ?',
-      args: [result.lastInsertRowid!]
+      args: [result.lastInsertRowid ? Number(result.lastInsertRowid) : 0]
     })
 
     return NextResponse.json(taskResult.rows[0], { status: 201 })
