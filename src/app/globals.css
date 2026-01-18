@@ -1,26 +1,135 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Indo-Western Wedding Theme Colors */
+  --background: #FFFBF5;
+  --foreground: #1a1a1a;
+
+  /* Primary - Deep Maroon/Burgundy */
+  --primary: #8B1538;
+  --primary-foreground: #FFFBF5;
+
+  /* Secondary - Rich Gold */
+  --secondary: #C9A227;
+  --secondary-foreground: #1a1a1a;
+
+  /* Accent Colors */
+  --accent: #D4A574;
+  --accent-foreground: #1a1a1a;
+
+  /* Muted */
+  --muted: #F5EDE4;
+  --muted-foreground: #6B5B4F;
+
+  /* Card */
+  --card: #FFFFFF;
+  --card-foreground: #1a1a1a;
+
+  /* Border */
+  --border: #E8DDD1;
+
+  /* Input */
+  --input: #E8DDD1;
+
+  /* Ring */
+  --ring: #8B1538;
+
+  /* Destructive */
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+
+  /* Success */
+  --success: #16A34A;
+  --success-foreground: #FFFFFF;
+
+  /* Warning */
+  --warning: #F59E0B;
+  --warning-foreground: #1a1a1a;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Accent Colors for charts/badges */
+  --magenta: #C71585;
+  --teal: #008080;
+  --coral: #FF6B6B;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* Mandala-inspired decorative elements */
+.mandala-bg {
+  background-image:
+    radial-gradient(circle at 50% 50%, transparent 30%, rgba(139, 21, 56, 0.03) 31%, rgba(139, 21, 56, 0.03) 32%, transparent 33%),
+    radial-gradient(circle at 50% 50%, transparent 50%, rgba(201, 162, 39, 0.03) 51%, rgba(201, 162, 39, 0.03) 52%, transparent 53%);
+  background-size: 100px 100px;
+}
+
+/* Gradient utilities */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, #B91C4D 100%);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, var(--secondary) 0%, #E6B422 100%);
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
 }
