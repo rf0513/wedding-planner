@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, ImageIcon, Palette, X, Check, Search, Loader2 } from "lucide-react"
+import { Plus, Trash2, ImageIcon, Palette, X, Check, Search, Loader2, Upload as UploadIcon } from "lucide-react"
 
 interface VisionItem {
   id: number
@@ -73,6 +73,8 @@ export default function VisionBoardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -139,6 +141,55 @@ export default function VisionBoardPage() {
       resetForm()
     } catch (error) {
       console.error("Failed to save item:", error)
+    }
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    e.preventDefault()
+    let file: File | null = null
+
+    if ('dataTransfer' in e) {
+      file = e.dataTransfer.files[0]
+    } else if (e.target.files) {
+      file = e.target.files[0]
+    }
+
+    if (!file) return
+
+    setIsUploading(true)
+    const data = new FormData()
+    data.append('file', file)
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: data
+      })
+
+      if (!res.ok) throw new Error('Upload failed')
+
+      const json = await res.json()
+      setFormData(prev => ({
+        ...prev,
+        imageUrl: json.url,
+        title: prev.title || file?.name.replace(/\.[^/.]+$/, "") || ""
+      }))
+    } catch (error) {
+      console.error("Upload error:", error)
+      alert("Failed to upload image. Please try again.")
+    } finally {
+      setIsUploading(false)
+      setDragActive(false)
+    }
+  }
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
     }
   }
 
@@ -290,32 +341,74 @@ export default function VisionBoardPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <Tabs defaultValue="url" className="w-full">
+                  <Tabs defaultValue="upload" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="url">Image URL</TabsTrigger>
-                      <TabsTrigger value="search">Search Unsplash</TabsTrigger>
+                      <TabsTrigger value="upload">Upload Photo</TabsTrigger>
+                      <TabsTrigger value="search">Search Inspiration</TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="url" className="mt-4 space-y-2">
-                      <Label htmlFor="imageUrl">Image URL</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="imageUrl"
-                          value={formData.imageUrl}
-                          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                          placeholder="https://..."
-                        />
-                        {formData.imageUrl && (
-                          <div className="w-10 h-10 relative rounded overflow-hidden border shrink-0 bg-[var(--muted)]">
-                            <img
-                              src={formData.imageUrl}
-                              className="w-full h-full object-cover"
-                              alt="Preview"
-                              onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
-                            />
-                          </div>
-                        )}
-                      </div>
+                    <TabsContent value="upload" className="mt-4 space-y-4">
+                      {formData.imageUrl && !formData.imageUrl.startsWith("http") ? (
+                        <div className="relative aspect-video bg-[var(--muted)] rounded-lg overflow-hidden border">
+                          <img
+                            src={formData.imageUrl}
+                            alt="Uploaded preview"
+                            className="w-full h-full object-contain"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={() => setFormData({ ...formData, imageUrl: "" })}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div
+                          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-[var(--primary)] bg-[var(--primary)]/10' : 'border-[var(--muted-foreground)]/25 hover:bg-[var(--muted)]'}`}
+                          onDragEnter={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDragOver={handleDrag}
+                          onDrop={handleFileUpload}
+                        >
+                          <input
+                            type="file"
+                            id="file-upload"
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleFileUpload}
+                          />
+                          <Label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                            {isUploading ? (
+                              <Loader2 className="w-10 h-10 animate-spin text-[var(--muted-foreground)]" />
+                            ) : (
+                              <UploadIcon className="w-10 h-10 text-[var(--muted-foreground)]" />
+                            )}
+                            <span className="text-sm font-medium">
+                              {isUploading ? "Uploading..." : "Click to upload or drag & drop"}
+                            </span>
+                            <span className="text-xs text-[var(--muted-foreground)]">
+                              JPG, PNG, WebP up to 5MB
+                            </span>
+                          </Label>
+                        </div>
+                      )}
+
+                      {/* Fallback URL input if needed */}
+                      {!formData.imageUrl && (
+                        <div className="text-center">
+                          <span className="text-xs text-[var(--muted-foreground)] bg-[var(--background)] px-2 relative z-10">or via URL</span>
+                          <div className="border-t -mt-2.5 mb-2"></div>
+                          <Input
+                            placeholder="Paste image URL directly..."
+                            value={formData.imageUrl}
+                            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                            className="text-xs"
+                          />
+                        </div>
+                      )}
                     </TabsContent>
 
                     <TabsContent value="search" className="mt-4 space-y-4">
