@@ -12,9 +12,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
         }
 
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 })
+        // Validate file type (include HEIC/HEIF for iPhone)
+        const validTypes = ['image/', 'application/octet-stream']
+        const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif']
+        const hasValidType = validTypes.some(t => file.type.startsWith(t)) || file.type === ''
+        const hasValidExt = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
+
+        if (!hasValidType && !hasValidExt) {
+            return NextResponse.json({ error: `Invalid file type: ${file.type}` }, { status: 400 })
         }
 
         // Validate file size (5MB)

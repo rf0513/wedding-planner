@@ -166,9 +166,8 @@ export default function VisionBoardPage() {
         body: data
       })
 
-      if (!res.ok) throw new Error('Upload failed')
-
       const json = await res.json()
+      if (!res.ok) throw new Error(json.error || json.details || 'Upload failed')
       setFormData(prev => ({
         ...prev,
         imageUrl: json.url,
@@ -176,7 +175,7 @@ export default function VisionBoardPage() {
       }))
     } catch (error) {
       console.error("Upload error:", error)
-      alert("Failed to upload image. Please try again.")
+      alert(error instanceof Error ? error.message : "Failed to upload image. Please try again.")
     } finally {
       setIsUploading(false)
       setDragActive(false)
