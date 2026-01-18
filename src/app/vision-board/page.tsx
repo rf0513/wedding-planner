@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, ImageIcon, Palette, X, Check } from "lucide-react"
+import { Plus, Trash2, ImageIcon, Palette, X, Check, Search, Loader2 } from "lucide-react"
 
 interface VisionItem {
   id: number
@@ -70,6 +70,9 @@ export default function VisionBoardPage() {
     title: "",
     notes: ""
   })
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -95,6 +98,30 @@ export default function VisionBoardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSearch = async (e: React.FormEvent | React.KeyboardEvent) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+
+    setIsSearching(true)
+    try {
+      const res = await fetch(`/api/vision/search?q=${encodeURIComponent(searchQuery)}`)
+      const data = await res.json()
+      setSearchResults(data.results || [])
+    } catch (error) {
+      console.error("Search failed:", error)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  const selectImage = (url: string, alt_description: string) => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: url,
+      title: !prev.title ? (alt_description || "").charAt(0).toUpperCase() + (alt_description || "").slice(1) : prev.title
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -141,6 +168,8 @@ export default function VisionBoardPage() {
       title: "",
       notes: ""
     })
+    setSearchQuery("")
+    setSearchResults([])
     setDialogOpen(true)
   }
 
@@ -260,15 +289,74 @@ export default function VisionBoardPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="imageUrl">Image URL</Label>
-                    <Input
-                      id="imageUrl"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  <Tabs defaultValue="url" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="url">Image URL</TabsTrigger>
+                      <TabsTrigger value="search">Search Unsplash</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="url" className="mt-4 space-y-2">
+                      <Label htmlFor="imageUrl">Image URL</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="imageUrl"
+                          value={formData.imageUrl}
+                          onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                          placeholder="https://..."
+                        />
+                        {formData.imageUrl && (
+                          <div className="w-10 h-10 relative rounded overflow-hidden border shrink-0 bg-[var(--muted)]">
+                            <img
+                              src={formData.imageUrl}
+                              className="w-full h-full object-cover"
+                              alt="Preview"
+                              onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="search" className="mt-4 space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search for inspiration..."
+                          onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
+                        />
+                        <Button type="button" onClick={handleSearch} disabled={isSearching}>
+                          {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                        </Button>
+                      </div>
+
+                      {searchResults.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                          {searchResults.map((photo: any) => (
+                            <button
+                              key={photo.id}
+                              type="button"
+                              className={`relative aspect-square overflow-hidden rounded border transition-all hover:scale-105 focus:outline-none ${formData.imageUrl === photo.urls.regular ? 'ring-2 ring-[var(--primary)] border-[var(--primary)]' : 'hover:ring-2 ring-[var(--muted-foreground)]'
+                                }`}
+                              onClick={() => selectImage(photo.urls.regular, photo.alt_description)}
+                            >
+                              <img src={photo.urls.thumb} alt={photo.alt_description} className="w-full h-full object-cover" />
+                              {formData.imageUrl === photo.urls.regular && (
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <Check className="w-6 h-6 text-white" />
+                                </div>
+                              )}
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white p-0.5 truncate px-1 opacity-0 hover:opacity-100 transition-opacity">
+                                by {photo.user.name}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        !isSearching && searchQuery && <p className="text-sm text-center text-[var(--muted-foreground)] py-4">No results found.</p>
+                      )}
+                    </TabsContent>
+                  </Tabs>
                   <div className="space-y-2">
                     <Label htmlFor="title">Title (optional)</Label>
                     <Input
@@ -387,9 +475,8 @@ export default function VisionBoardPage() {
                                     <button
                                       key={c.color}
                                       type="button"
-                                      className={`w-10 h-10 rounded-full border-2 shadow-sm relative transition-transform hover:scale-110 ${
-                                        selectedColors.includes(c.color) ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]' : 'border-white'
-                                      }`}
+                                      className={`w-10 h-10 rounded-full border-2 shadow-sm relative transition-transform hover:scale-110 ${selectedColors.includes(c.color) ? 'border-[var(--primary)] ring-2 ring-[var(--primary)]' : 'border-white'
+                                        }`}
                                       style={{ backgroundColor: c.color }}
                                       onClick={() => toggleColor(c.color)}
                                       title={c.name}
@@ -473,7 +560,7 @@ export default function VisionBoardPage() {
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = ''
-                                ;(e.target as HTMLImageElement).style.display = 'none'
+                                  ; (e.target as HTMLImageElement).style.display = 'none'
                               }}
                             />
                             <Button
