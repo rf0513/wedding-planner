@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
     try {
         const data = await request.formData()
@@ -24,13 +26,11 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        // Ensure uploads directory exists - use path.resolve for reliable Windows path handling
-        const uploadDir = path.resolve('./public/uploads/vision-board')
-        console.log('Upload dir:', uploadDir)
+        // Ensure uploads directory exists - use process.cwd() for reliable path resolution
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'vision-board')
 
         try {
             await mkdir(uploadDir, { recursive: true })
-            console.log('Upload directory created/verified:', uploadDir)
         } catch (mkdirError) {
             console.error('Failed to create upload directory:', mkdirError)
             return NextResponse.json({
