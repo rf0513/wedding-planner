@@ -73,7 +73,6 @@ export default function VisionBoardPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
-  const [searchSource, setSearchSource] = useState<"unsplash" | "pexels" | "google">("unsplash")
 
   useEffect(() => {
     fetchData()
@@ -107,7 +106,7 @@ export default function VisionBoardPage() {
 
     setIsSearching(true)
     try {
-      const res = await fetch(`/api/vision/search?q=${encodeURIComponent(searchQuery)}&source=${searchSource}`)
+      const res = await fetch(`/api/vision/search?q=${encodeURIComponent(searchQuery)}&source=all`)
       const data = await res.json()
       setSearchResults(data.results || [])
     } catch (error) {
@@ -320,23 +319,11 @@ export default function VisionBoardPage() {
                     </TabsContent>
 
                     <TabsContent value="search" className="mt-4 space-y-4">
-                      {/* Provider Tabs */}
-                      <Tabs value={searchSource} onValueChange={(v) => {
-                        setSearchSource(v as any)
-                        setSearchResults([])
-                      }} className="w-full">
-                        <TabsList className="w-full grid grid-cols-3 h-8">
-                          <TabsTrigger value="unsplash" className="text-xs">Unsplash</TabsTrigger>
-                          <TabsTrigger value="pexels" className="text-xs">Pexels</TabsTrigger>
-                          <TabsTrigger value="google" className="text-xs">Google</TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-
                       <div className="flex gap-2">
                         <Input
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder={`Search ${searchSource}...`}
+                          placeholder="Search Unsplash, Pexels, and Google..."
                           onKeyDown={(e) => e.key === 'Enter' && handleSearch(e)}
                         />
                         <Button type="button" onClick={handleSearch} disabled={isSearching}>
@@ -361,8 +348,9 @@ export default function VisionBoardPage() {
                                 </div>
                               )}
                               {photo.author && (
-                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white p-0.5 truncate px-1 opacity-0 hover:opacity-100 transition-opacity">
-                                  by {photo.author}
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-[10px] text-white p-0.5 truncate px-1 opacity-0 hover:opacity-100 transition-opacity flex justify-between">
+                                  <span>by {photo.author}</span>
+                                  <span className="capitalize opacity-75">{photo.source}</span>
                                 </div>
                               )}
                             </button>

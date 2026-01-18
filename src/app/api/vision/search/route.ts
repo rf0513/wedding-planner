@@ -12,7 +12,7 @@ interface SearchResult {
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('q')
-    const source = searchParams.get('source') || 'unsplash'
+    const source = searchParams.get('source') || 'all'
 
     if (!query) {
         return NextResponse.json({ results: [] })
@@ -21,18 +21,39 @@ export async function GET(request: NextRequest) {
     try {
         let results: SearchResult[] = []
 
-        switch (source) {
-            case 'unsplash':
-                results = await searchUnsplash(query)
-                break
-            case 'pexels':
-                results = await searchPexels(query)
-                break
-            case 'google':
-                results = await searchGoogle(query)
-                break
-            default:
-                return NextResponse.json({ error: 'Invalid source' }, { status: 400 })
+        if (source === 'all') {
+            // Parallel execution
+            const [unsplashRes, pexelsRes, googleRes] = await Promise.allSettled([
+                searchUnsplash(query).catch(e => { console.error('Unsplash error:', e); return [] }),
+                searchPexels(query).catch(e => { console.error('Pexels error:', e); return [] }),
+                searchGoogle(query).catch(e => { console.error('Google error:', e); return [] })
+            ])
+
+            const unsplashItems = unsplashRes.status === 'fulfilled' ? unsplashRes.value : []
+            const pexelsItems = pexelsRes.status === 'fulfilled' ? pexelsRes.value : []
+            const googleItems = googleRes.status === 'fulfilled' ? googleRes.value : []
+
+            // Interleave results for variety
+            const maxLength = Math.max(unsplashItems.length, pexelsItems.length, googleItems.length)
+            for (let i = 0; i < maxLength; i++) {
+                if (unsplashItems[i]) results.push(unsplashItems[i])
+                if (pexelsItems[i]) results.push(pexelsItems[i])
+                if (googleItems[i]) results.push(googleItems[i])
+            }
+        } else {
+            switch (source) {
+                case 'unsplash':
+                    results = await searchUnsplash(query)
+                    break
+                case 'pexels':
+                    results = await searchPexels(query)
+                    break
+                case 'google':
+                    results = await searchGoogle(query)
+                    break
+                default:
+                    return NextResponse.json({ error: 'Invalid source' }, { status: 400 })
+            }
         }
 
         return NextResponse.json({ results })
