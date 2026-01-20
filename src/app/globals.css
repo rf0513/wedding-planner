@@ -1,38 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  /* Indo-Western Wedding Theme Colors */
-  --background: #FFFBF5;
+  /* Professional Spreadsheet-like Theme Colors */
+  --background: #FAFAFA;
   --foreground: #1a1a1a;
 
-  /* Primary - Deep Maroon/Burgundy */
-  --primary: #8B1538;
-  --primary-foreground: #FFFBF5;
+  /* Primary - Professional Blue */
+  --primary: #2563EB;
+  --primary-foreground: #FFFFFF;
 
-  /* Secondary - Rich Gold */
-  --secondary: #C9A227;
-  --secondary-foreground: #1a1a1a;
+  /* Secondary - Slate Gray */
+  --secondary: #64748B;
+  --secondary-foreground: #FFFFFF;
 
   /* Accent Colors */
-  --accent: #D4A574;
+  --accent: #64748B;
   --accent-foreground: #1a1a1a;
 
   /* Muted */
-  --muted: #F5EDE4;
-  --muted-foreground: #6B5B4F;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
 
   /* Card */
   --card: #FFFFFF;
   --card-foreground: #1a1a1a;
 
   /* Border */
-  --border: #E8DDD1;
+  --border: #E2E8F0;
 
   /* Input */
-  --input: #E8DDD1;
+  --input: #E2E8F0;
 
   /* Ring */
-  --ring: #8B1538;
+  --ring: #2563EB;
 
   /* Destructive */
   --destructive: #DC2626;
@@ -47,12 +47,12 @@
   --warning-foreground: #1a1a1a;
 
   /* Radius */
-  --radius: 0.5rem;
+  --radius: 0.25rem;
 
   /* Accent Colors for charts/badges */
-  --magenta: #C71585;
-  --teal: #008080;
-  --coral: #FF6B6B;
+  --magenta: #64748B;
+  --teal: #64748B;
+  --coral: #64748B;
 }
 
 @theme inline {
@@ -92,23 +92,6 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-/* Mandala-inspired decorative elements */
-.mandala-bg {
-  background-image:
-    radial-gradient(circle at 50% 50%, transparent 30%, rgba(139, 21, 56, 0.03) 31%, rgba(139, 21, 56, 0.03) 32%, transparent 33%),
-    radial-gradient(circle at 50% 50%, transparent 50%, rgba(201, 162, 39, 0.03) 51%, rgba(201, 162, 39, 0.03) 52%, transparent 53%);
-  background-size: 100px 100px;
-}
-
-/* Gradient utilities */
-.gradient-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, #B91C4D 100%);
-}
-
-.gradient-gold {
-  background: linear-gradient(135deg, var(--secondary) 0%, #E6B422 100%);
-}
-
 /* Animation utilities */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -116,7 +99,7 @@ body {
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.15s ease-out;
 }
 
 /* Custom scrollbar */

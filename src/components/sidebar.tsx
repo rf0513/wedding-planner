@@ -15,9 +15,9 @@ import {
   MapPin,
   ImageIcon,
   Store,
-  Heart,
+  LayoutGrid,
   Clock,
-  PartyPopper,
+  Calendar,
   LogOut,
   Menu,
   X
@@ -26,7 +26,7 @@ import { useState } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Events", href: "/events", icon: PartyPopper },
+  { name: "Events", href: "/events", icon: Calendar },
   { name: "To-Do List", href: "/todos", icon: CheckSquare },
   { name: "Budget", href: "/budget", icon: DollarSign },
   { name: "Guests", href: "/guests", icon: Users },
@@ -34,7 +34,7 @@ const navigation = [
   { name: "Seating", href: "/seating", icon: MapPin },
   { name: "Vision Board", href: "/vision-board", icon: ImageIcon },
   { name: "Vendors", href: "/vendors", icon: Store },
-  { name: "Wedding Party", href: "/wedding-party", icon: Heart },
+  { name: "Wedding Party", href: "/wedding-party", icon: Users },
   { name: "Itinerary", href: "/itinerary", icon: Clock },
 ]
 
@@ -72,8 +72,8 @@ export function Sidebar() {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 p-6 border-b">
-            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center">
-              <Heart className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded bg-[var(--primary)] flex items-center justify-center">
+              <LayoutGrid className="w-5 h-5 text-white" />
             </div>
             <div>
               <h1 className="font-semibold" style={{ color: 'var(--primary)' }}>

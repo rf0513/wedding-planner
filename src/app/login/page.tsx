@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heart } from "lucide-react"
+import { LayoutGrid } from "lucide-react"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -42,12 +42,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center mandala-bg p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 rounded-full gradient-primary flex items-center justify-center">
-              <Heart className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded bg-[var(--primary)] flex items-center justify-center">
+              <LayoutGrid className="w-8 h-8 text-white" />
             </div>
           </div>
           <CardTitle className="text-2xl" style={{ color: 'var(--primary)' }}>

@@ -10,8 +10,9 @@ import {
   DollarSign,
   Users,
   CheckSquare,
-  PartyPopper,
-  TrendingUp
+  Calendar,
+  TrendingUp,
+  Store
 } from "lucide-react"
 
 const WEDDING_DATE = new Date("2027-02-02T00:00:00")
@@ -73,10 +74,10 @@ export function DashboardContent() {
 
       {/* Countdown */}
       <Card className="overflow-hidden">
-        <div className="gradient-primary p-6 text-white">
+        <div className="bg-[var(--primary)] p-6 text-white">
           <div className="flex items-center gap-2 mb-4">
-            <PartyPopper className="w-6 h-6" />
-            <span className="font-medium">Countdown to Your Big Day</span>
+            <Calendar className="w-6 h-6" />
+            <span className="font-medium">Countdown to Event Date</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 text-center">
             <div>
@@ -181,14 +182,14 @@ export function DashboardContent() {
           <CardContent>
             <div className="space-y-4">
               {[
-                { name: "Mehendi", date: "Feb 2", time: "", color: "bg-green-500", day: 1 },
-                { name: "Haldi", date: "Feb 3", time: "Morning", color: "bg-yellow-500", day: 2 },
-                { name: "Vows & Sangeet", date: "Feb 3", time: "Evening", color: "bg-purple-500", day: 2 },
-                { name: "Wedding Ceremony", date: "Feb 4", time: "Morning", color: "bg-red-500", day: 3 },
-                { name: "Reception", date: "Feb 4", time: "Evening", color: "bg-blue-500", day: 3 },
+                { name: "Mehendi", date: "Feb 2", time: "", color: "bg-slate-400", day: 1 },
+                { name: "Haldi", date: "Feb 3", time: "Morning", color: "bg-slate-500", day: 2 },
+                { name: "Vows & Sangeet", date: "Feb 3", time: "Evening", color: "bg-slate-400", day: 2 },
+                { name: "Wedding Ceremony", date: "Feb 4", time: "Morning", color: "bg-slate-500", day: 3 },
+                { name: "Reception", date: "Feb 4", time: "Evening", color: "bg-slate-400", day: 3 },
               ].map((event, i) => (
                 <div key={i} className="flex items-center gap-4">
-                  <div className={`w-3 h-3 rounded-full ${event.color}`} />
+                  <div className={`w-3 h-3 rounded-sm ${event.color}`} />
                   <div className="flex-1">
                     <p className="font-medium">{event.name}</p>
                     <p className="text-sm text-[var(--muted-foreground)]">
@@ -212,30 +213,30 @@ export function DashboardContent() {
             <div className="grid grid-cols-2 gap-3">
               <a
                 href="/guests"
-                className="p-4 rounded-lg border hover:bg-[var(--muted)] transition-colors text-center"
+                className="p-4 rounded border hover:bg-[var(--muted)] transition-colors text-center"
               >
                 <Users className="w-6 h-6 mx-auto mb-2 text-[var(--primary)]" />
                 <span className="text-sm font-medium">Add Guest</span>
               </a>
               <a
                 href="/todos"
-                className="p-4 rounded-lg border hover:bg-[var(--muted)] transition-colors text-center"
+                className="p-4 rounded border hover:bg-[var(--muted)] transition-colors text-center"
               >
                 <CheckSquare className="w-6 h-6 mx-auto mb-2 text-[var(--primary)]" />
                 <span className="text-sm font-medium">Add Task</span>
               </a>
               <a
                 href="/budget"
-                className="p-4 rounded-lg border hover:bg-[var(--muted)] transition-colors text-center"
+                className="p-4 rounded border hover:bg-[var(--muted)] transition-colors text-center"
               >
                 <DollarSign className="w-6 h-6 mx-auto mb-2 text-[var(--primary)]" />
                 <span className="text-sm font-medium">Log Expense</span>
               </a>
               <a
                 href="/vendors"
-                className="p-4 rounded-lg border hover:bg-[var(--muted)] transition-colors text-center"
+                className="p-4 rounded border hover:bg-[var(--muted)] transition-colors text-center"
               >
-                <PartyPopper className="w-6 h-6 mx-auto mb-2 text-[var(--primary)]" />
+                <Store className="w-6 h-6 mx-auto mb-2 text-[var(--primary)]" />
                 <span className="text-sm font-medium">Add Vendor</span>
               </a>
             </div>
