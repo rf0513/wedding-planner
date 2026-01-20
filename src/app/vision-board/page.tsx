@@ -58,6 +58,12 @@ export default function VisionBoardPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 })
   const [dragActive, setDragActive] = useState(false)
+  const [activeBoard, setActiveBoard] = useState<'outfits' | 'decor'>('outfits')
+
+  const BOARD_TYPES = [
+    { key: 'outfits', label: 'Outfits' },
+    { key: 'decor', label: 'Decor' }
+  ] as const
 
   useEffect(() => {
     fetchData()
@@ -125,7 +131,7 @@ export default function VisionBoardPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            section: activeEvent,
+            section: `${activeEvent}_${activeBoard}`,
             imageUrl: url,
           })
         })
@@ -232,6 +238,10 @@ export default function VisionBoardPage() {
     return event.name.toLowerCase().replace(/\s+/g, '_').replace(/&/g, '')
   }
 
+  const getSectionKey = (event: WeddingEvent, boardType: string) => {
+    return `${getEventKey(event)}_${boardType}`
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
@@ -257,7 +267,7 @@ export default function VisionBoardPage() {
 
             {events.map((event) => {
               const colors = getEventColors(event)
-              const eventItems = items.filter(i => i.section === getEventKey(event))
+              const eventItems = items.filter(i => i.section === getSectionKey(event, activeBoard))
 
               return (
                 <TabsContent key={event.id} value={getEventKey(event)} className="mt-6 space-y-6">
@@ -379,6 +389,20 @@ export default function VisionBoardPage() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Board Type Toggle */}
+                  <div className="flex gap-2">
+                    {BOARD_TYPES.map((board) => (
+                      <Button
+                        key={board.key}
+                        variant={activeBoard === board.key ? 'default' : 'outline'}
+                        onClick={() => setActiveBoard(board.key)}
+                        className="flex-1"
+                      >
+                        {board.label}
+                      </Button>
+                    ))}
+                  </div>
 
                   {/* Upload Area */}
                   <div

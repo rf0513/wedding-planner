@@ -222,8 +222,7 @@ export async function initializeDatabase() {
       { name: 'Mehendi', date: '2027-02-02', venue: 'TBD', order: 1 },
       { name: 'Sangeet', date: '2027-02-03', venue: 'TBD', order: 2 },
       { name: 'Haldi', date: '2027-02-04', venue: 'TBD', order: 3 },
-      { name: 'Wedding Ceremony', date: '2027-02-05', venue: 'TBD', order: 4 },
-      { name: 'Reception', date: '2027-02-06', venue: 'TBD', order: 5 }
+      { name: 'Wedding & Reception', date: '2027-02-05', venue: 'TBD', order: 4 }
     ]
 
     await db.insert(schema.weddingEvents).values(events)
