@@ -1,24 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  /* Professional Spreadsheet-like Theme Colors */
-  --background: #FAFAFA;
+  /* Soft, Warm Wedding Theme Colors */
+  --background: #FAFBFC;
   --foreground: #1a1a1a;
 
-  /* Primary - Professional Blue */
-  --primary: #2563EB;
+  /* Primary - Soft Slate Blue (warmer, less corporate) */
+  --primary: #5B8FB9;
   --primary-foreground: #FFFFFF;
 
-  /* Secondary - Slate Gray */
-  --secondary: #64748B;
+  /* Secondary - Warm Slate */
+  --secondary: #7C9CB5;
   --secondary-foreground: #FFFFFF;
 
   /* Accent Colors */
-  --accent: #64748B;
+  --accent: #7C9CB5;
   --accent-foreground: #1a1a1a;
 
-  /* Muted */
-  --muted: #F1F5F9;
+  /* Muted - Soft blue-gray tint */
+  --muted: #F0F4F8;
   --muted-foreground: #64748B;
 
   /* Card */
@@ -32,7 +32,7 @@
   --input: #E2E8F0;
 
   /* Ring */
-  --ring: #2563EB;
+  --ring: #5B8FB9;
 
   /* Destructive */
   --destructive: #DC2626;
@@ -46,8 +46,8 @@
   --warning: #F59E0B;
   --warning-foreground: #1a1a1a;
 
-  /* Radius */
-  --radius: 0.25rem;
+  /* Radius - Softer, more rounded */
+  --radius: 0.5rem;
 
   /* Accent Colors for charts/badges */
   --magenta: #64748B;
@@ -120,4 +120,77 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
+}
+
+/* Print styles for PDF export */
+@media print {
+  /* Hide navigation and non-essential UI */
+  aside,
+  .sidebar,
+  nav,
+  button:not(.print-show),
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset page layout */
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .md\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  /* Card styling for print */
+  .card,
+  [class*="Card"] {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-bottom: 1rem;
+  }
+
+  /* Headers */
+  h1, h2, h3 {
+    break-after: avoid;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+    text-align: left;
+  }
+
+  /* Task list items */
+  .task-item {
+    break-inside: avoid;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 0.75in;
+    size: letter;
+  }
+
+  /* Ensure colors print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }

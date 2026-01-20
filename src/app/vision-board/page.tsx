@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Plus, Trash2, ImageIcon, Palette, X, Check, Loader2, Upload as UploadIcon } from "lucide-react"
+import { Plus, Trash2, ImageIcon, Palette, X, Check, Loader2, Upload as UploadIcon, ExternalLink } from "lucide-react"
 
 interface VisionItem {
   id: number
@@ -245,13 +245,26 @@ export default function VisionBoardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--primary)' }}>
-            Vision Board
-          </h1>
-          <p className="text-[var(--muted-foreground)] mt-1">
-            Collect inspiration for each event
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--primary)' }}>
+              Vision Board
+            </h1>
+            <p className="text-[var(--muted-foreground)] mt-1">
+              Collect inspiration for each event
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              const event = getCurrentEvent()
+              const searchQuery = encodeURIComponent(`${event?.name || 'wedding'} wedding inspiration`)
+              window.open(`https://pinterest.com/search/pins/?q=${searchQuery}`, '_blank')
+            }}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Pinterest Ideas
+          </Button>
         </div>
 
         {events.length > 0 && (

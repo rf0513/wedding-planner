@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Trash2, Edit, DollarSign, TrendingUp, TrendingDown, PieChart, Sliders, Calendar } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
+import { ExportPdfButton } from "@/components/export-pdf-button"
 
 const TOTAL_BUDGET = 80000
 
@@ -242,7 +243,9 @@ export default function BudgetPage() {
               Track your wedding expenses and payments
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
+          <div className="flex gap-2 flex-wrap">
+            <ExportPdfButton title="Export PDF" />
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open)
             if (!open) resetForm()
           }}>
@@ -370,6 +373,7 @@ export default function BudgetPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Summary Cards */}

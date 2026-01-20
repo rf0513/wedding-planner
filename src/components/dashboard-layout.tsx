@@ -9,7 +9,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-[var(--background)]">
         <Sidebar />
         <main className="md:pl-64">
-          <div className="p-4 md:p-8 pt-16 md:pt-8">
+          <div className="p-4 md:p-8 pt-20 md:pt-8">
             {children}
           </div>
         </main>

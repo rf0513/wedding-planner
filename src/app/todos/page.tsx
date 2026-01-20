@@ -11,8 +11,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Trash2, Calendar, Flag, User } from "lucide-react"
+import { Plus, Trash2, Calendar, User, AlertCircle, Clock } from "lucide-react"
 import { formatDate } from "@/lib/utils"
+import { ExportPdfButton } from "@/components/export-pdf-button"
 
 interface Task {
   id: number
@@ -39,12 +40,15 @@ const priorities = [
   { value: "low", label: "Low", color: "secondary" }
 ] as const
 
+type TimeFilter = "this-month" | "next-month" | "later" | "overdue" | "all-time"
+
 export default function TodosPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [filter, setFilter] = useState<"all" | "active" | "completed">("all")
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("this-month")
 
   const [formData, setFormData] = useState({
     title: "",
@@ -139,17 +143,68 @@ export default function TodosPage() {
     setDialogOpen(true)
   }
 
-  const filteredTasks = tasks.filter(task => {
+  // Time filtering helpers
+  const getTimeFilteredTasks = (taskList: Task[]) => {
+    const now = new Date()
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    const thisMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const nextMonthEnd = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+
+    return taskList.filter(task => {
+      if (timeFilter === "all-time") return true
+
+      if (!task.due_date) {
+        // Tasks without due date show in "later" or "all-time"
+        return timeFilter === "later"
+      }
+
+      const dueDate = new Date(task.due_date)
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      switch (timeFilter) {
+        case "overdue":
+          return dueDate < today && !task.completed
+        case "this-month":
+          return dueDate >= thisMonthStart && dueDate <= thisMonthEnd
+        case "next-month":
+          return dueDate >= nextMonthStart && dueDate <= nextMonthEnd
+        case "later":
+          return dueDate > nextMonthEnd || !task.due_date
+        default:
+          return true
+      }
+    })
+  }
+
+  // Count overdue tasks
+  const overdueCount = tasks.filter(task => {
+    if (!task.due_date || task.completed) return false
+    const dueDate = new Date(task.due_date)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return dueDate < today
+  }).length
+
+  const filteredTasks = getTimeFilteredTasks(tasks).filter(task => {
     if (filter === "active") return !task.completed
     if (filter === "completed") return task.completed
     return true
   })
 
   const stats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.completed).length,
-    highPriority: tasks.filter(t => t.priority === "high" && !t.completed).length
+    total: filteredTasks.length,
+    completed: filteredTasks.filter(t => t.completed).length,
+    highPriority: filteredTasks.filter(t => t.priority === "high" && !t.completed).length
   }
+
+  const timeFilterOptions: { value: TimeFilter; label: string }[] = [
+    { value: "this-month", label: "This Month" },
+    { value: "next-month", label: "Next Month" },
+    { value: "later", label: "Later" },
+    { value: "overdue", label: "Overdue" },
+    { value: "all-time", label: "All Tasks" },
+  ]
 
   return (
     <DashboardLayout>
@@ -163,7 +218,9 @@ export default function TodosPage() {
               Track and manage your wedding tasks
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => {
+          <div className="flex gap-2 flex-wrap">
+            <ExportPdfButton title="Export PDF" />
+            <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open)
             if (!open) resetForm()
           }}>
@@ -257,10 +314,33 @@ export default function TodosPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
+        </div>
+
+        {/* Time Filter */}
+        <div className="flex flex-wrap gap-2">
+          {timeFilterOptions.map((option) => (
+            <Button
+              key={option.value}
+              variant={timeFilter === option.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setTimeFilter(option.value)}
+              className="relative"
+            >
+              {option.value === "overdue" && <AlertCircle className="w-3 h-3 mr-1" />}
+              {option.value === "this-month" && <Clock className="w-3 h-3 mr-1" />}
+              {option.label}
+              {option.value === "overdue" && overdueCount > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs bg-[var(--destructive)] text-white rounded-full">
+                  {overdueCount}
+                </span>
+              )}
+            </Button>
+          ))}
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{stats.completed}/{stats.total}</div>
@@ -277,6 +357,14 @@ export default function TodosPage() {
             <CardContent className="pt-6">
               <div className="text-2xl font-bold text-[var(--destructive)]">{stats.highPriority}</div>
               <p className="text-sm text-[var(--muted-foreground)]">High priority</p>
+            </CardContent>
+          </Card>
+          <Card className={overdueCount > 0 ? "border-[var(--destructive)]" : ""}>
+            <CardContent className="pt-6">
+              <div className={`text-2xl font-bold ${overdueCount > 0 ? "text-[var(--destructive)]" : ""}`}>
+                {overdueCount}
+              </div>
+              <p className="text-sm text-[var(--muted-foreground)]">Overdue</p>
             </CardContent>
           </Card>
         </div>

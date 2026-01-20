@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Plus, Trash2, Edit, Search, Users, UserCheck, UserX, Mail, Phone, Upload, Download, FileSpreadsheet, AlertCircle, CheckCircle } from "lucide-react"
+import { ExportPdfButton } from "@/components/export-pdf-button"
 
 interface Guest {
   id: number
@@ -263,6 +264,9 @@ export default function GuestsPage() {
               accept=".csv,.xlsx,.xls"
               className="hidden"
             />
+
+            {/* Export PDF Button */}
+            <ExportPdfButton title="Export PDF" />
 
             {/* Import Button */}
             <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
